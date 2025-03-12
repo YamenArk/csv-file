@@ -1,42 +1,56 @@
-import { Controller, Get,UploadedFile, Post, UseInterceptors, HttpCode, Body, UsePipes, Logger } from '@nestjs/common';
+import { 
+  Controller,
+  UploadedFile,
+  Post,
+  UseInterceptors,
+  HttpCode,
+  Body,
+  UsePipes,
+  Logger } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Multer,diskStorage } from 'multer';
+import { Multer } from 'multer';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { CreateStatisticValidation } from 'lib/validations/src';
+import { CreateStatisticDto } from 'types';
+
 import { CsvFilesService } from 'src/csv-files/csv-files.service';
 import { JoiValidationPipe } from 'src/lib/validation.pipe';
-import { CreateStatisticDto } from 'types';
 import { CsvHttpError } from 'src/lib/errors/http-errors';
-import { FileExistencePipe } from 'src/lib/FileExistencePipe';
-import { fileUpload } from 'src/lib/file-upload';
+import { FileExistencePipe } from 'src/lib/file-existence-pipe';
+import { FileUpload } from 'src/lib/file-upload';
+
 
 @Controller('csv-files')
 export class CsvFilesController {
-  constructor(private readonly csvFilesService: CsvFilesService) {}
+  constructor(
+    private readonly csvFilesService: CsvFilesService,
+    @InjectQueue('file-processing') private fileQueue: Queue
+  ) {}
 
-
-    
   @Post()
-  @UseInterceptors(FileInterceptor('file', fileUpload)) 
-  @HttpCode(201)
+  @UseInterceptors(FileInterceptor('file', FileUpload)) 
+  @HttpCode(202)
   @UsePipes(FileExistencePipe) // File existence pipe
-  async createDynamicTable(
+  async uploadFile(
     @UploadedFile() file: Multer.File
-  ){
+  ) {
     try {
-      const tableName = await this.csvFilesService.createDynamicTable(file.path);
-
-      return {tableName : tableName};
-    } catch (e) {
-      Logger.error(`Failed createDynamicTable`);
-      CsvHttpError.throwHttpErrorFromCsv(e);
+       this.fileQueue.add(
+        { filePath: file.path },
+        {
+          attempts: 5,
+          backoff: 5000,
+        }
+      );
+      return { message: 'File uploaded successfully. Processing in background.'};
+    } catch (error) {
+      Logger.error('Failed to add job to queue', error);
+      throw error;
     }
   }
 
-
-
-
-  
   @Post('/statistic')
   @UsePipes(new JoiValidationPipe(CreateStatisticValidation))
   @HttpCode(201)
@@ -49,8 +63,4 @@ export class CsvFilesController {
       CsvHttpError.throwHttpErrorFromCsv(e);
     }
   }
-
-  
-
 }
-

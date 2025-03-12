@@ -11,5 +11,4 @@ export class CreateStatisticUsecase implements Usecase<CreateStatisticDto,Promis
     }
     return await this.csvRepository.CreateStatistic(data.tableName);
   }
-
 }

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
+
 import { ConfigService } from './config.service';
 import  SqlProvider  from './sql.provider';
 import { SqlCsvRepository } from './repositories/csv-repository';
-
 
 @Module({
     imports: [],

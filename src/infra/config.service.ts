@@ -17,6 +17,4 @@ export class ConfigService{
   getDatabasePasswordString(): string {
     return process.env.DATABASE_PASSWORD;
   }
-
-
 }

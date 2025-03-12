@@ -1,7 +1,7 @@
 import { diskStorage } from 'multer';
 import { BadRequestException } from '@nestjs/common';
 
-export const fileUpload = {
+export const FileUpload = {
   storage: diskStorage({
     destination: './uploads', // Folder to store uploaded files
     filename: (req, file, callback) => {

@@ -4,7 +4,6 @@ import { config as dotenv } from 'dotenv';
 
 import { AppModule } from './app.module';
 
-
 dotenv();
 
 async function bootstrap() {

@@ -11,7 +11,6 @@ import { TableNotFoundError } from './table-errors';
       if (error instanceof TableNotFoundError) {
         throw new NotFoundException();
       }
-  
       throw new InternalServerErrorException();
     }
   }
