@@ -1,4 +1,5 @@
 import {  Usecase,CsvRepository, CreateStatisticDto   } from 'lib/types/src/index';
+
 import { TableNotFoundError } from 'src/lib/errors/table-errors';
 
 export class CreateStatisticUsecase implements Usecase<CreateStatisticDto,Promise<string>  > {

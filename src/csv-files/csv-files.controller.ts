@@ -6,7 +6,10 @@ import {
   HttpCode,
   Body,
   UsePipes,
-  Logger } from '@nestjs/common';
+  Logger, 
+  Request,
+  UseGuards
+ } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer';
 import { Queue } from 'bull';
@@ -20,7 +23,7 @@ import { JoiValidationPipe } from 'src/lib/validation.pipe';
 import { CsvHttpError } from 'src/lib/errors/http-errors';
 import { FileExistencePipe } from 'src/lib/file-existence-pipe';
 import { FileUpload } from 'src/lib/file-upload';
-
+import { AuthGuard } from 'src/lib/auth/auth.guard';
 
 @Controller('csv-files')
 export class CsvFilesController {
@@ -30,24 +33,28 @@ export class CsvFilesController {
   ) {}
 
   @Post()
+  @UseGuards(AuthGuard) 
   @UseInterceptors(FileInterceptor('file', FileUpload)) 
   @HttpCode(202)
   @UsePipes(FileExistencePipe) // File existence pipe
   async uploadFile(
-    @UploadedFile() file: Multer.File
+    @UploadedFile() file: Multer.File,
+    @Request() req
   ) {
     try {
-       this.fileQueue.add(
-        { filePath: file.path },
+        this.fileQueue.add(
+        { filePath: file.path,
+          userId : req.user.userId
+         },
         {
           attempts: 5,
           backoff: 5000,
         }
       );
       return { message: 'File uploaded successfully. Processing in background.'};
-    } catch (error) {
-      Logger.error('Failed to add job to queue', error);
-      throw error;
+    } catch (e) {
+      Logger.error('Failed to add job to queue', e);
+      CsvHttpError.throwHttpErrorFromCsv(e);
     }
   }
 
@@ -56,11 +63,12 @@ export class CsvFilesController {
   @HttpCode(201)
   async createStatistic(@Body() body: CreateStatisticDto) {
     try {
-      const Statistic = await this.csvFilesService.createStatistic(body);
-      return {Statistic : Statistic};
+      const statistic = await this.csvFilesService.createStatistic(body);
+      return {statistic : statistic};
     } catch (e) {
       Logger.error(`Failed createStatistic`);
       CsvHttpError.throwHttpErrorFromCsv(e);
     }
   }
+
 }

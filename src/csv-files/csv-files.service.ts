@@ -9,10 +9,13 @@ import { CreateStatisticUsecase } from './usecases/create-statistic.usecase';
 @Injectable()
 export class CsvFilesService {
     constructor(
-        private readonly sqlCsvRepository : SqlCsvRepository) {}
+        private readonly sqlCsvRepository: SqlCsvRepository,
+    ) {}
 
-    async createDynamicTable(filePath : string) {
-        const createDynamicTableUsecase = new CreateDynamicTableUsecase(this.sqlCsvRepository);
+    async createDynamicTable(filePath: string) {
+        const createDynamicTableUsecase = new CreateDynamicTableUsecase(
+            this.sqlCsvRepository, 
+        );
         return createDynamicTableUsecase.execute(filePath)
       }
 
