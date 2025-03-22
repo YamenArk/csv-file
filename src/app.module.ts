@@ -1,17 +1,30 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bull';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CsvFilesModule } from './csv-files/csv-files.module';
 import { InfraModule } from './infra/infra.module';
-import { BullModule } from '@nestjs/bull';
+import { ConfigService } from 'src/infra/config.service';
+import { UserModule } from './user/user.module';
+import { JobModule } from './job/job.module';
+import { getTypeOrmConfig } from './infra/typeorm.config';
+import { BullConfig } from './infra/bull-config';
+
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      redis: {
-        host: 'localhost',
-        port: 6379,
-      },
+    BullModule.forRootAsync({
+      imports: [InfraModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => BullConfig.getRedisConfig(configService),
     }),
+    TypeOrmModule.forRootAsync({
+      imports: [InfraModule],
+      inject: [ConfigService],
+      useFactory: getTypeOrmConfig,  
+    }),
+    JobModule,
+    UserModule,
     CsvFilesModule,
     InfraModule
     ],

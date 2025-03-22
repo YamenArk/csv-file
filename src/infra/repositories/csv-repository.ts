@@ -18,6 +18,28 @@ export class SqlCsvRepository implements CsvRepository {
         return tableName
     }
 
+    async CreateStatistic(tableName : string):Promise<string>{
+      const numericColumns = await this.getNumericColumns(tableName);
+      if (numericColumns.length === 0) {
+        console.log("No numeric columns found for statistics.");
+        return;
+      }
+      const statsQuery = this.getStatisticsQuery(tableName, numericColumns);
+      const [stats]: any = await this.db.execute(statsQuery);
+      return stats;
+    }
+
+    async getTableByName(tableName: string): Promise<boolean> {
+      const query = `SHOW TABLES LIKE '${tableName}'`;  
+      const [rows]: any = await this.db.execute(query);
+      if(rows.length > 0){
+          return true
+      }
+      return false
+    }
+
+
+
     private generateTableName(filePath: string): string {
         return filePath.replace(/^uploads\\/, '').replace(/\.csv$/, '');
       }
@@ -54,17 +76,6 @@ export class SqlCsvRepository implements CsvRepository {
     await this.db.execute(query);
     }
         
-    async CreateStatistic(tableName : string):Promise<string>{
-        const numericColumns = await this.getNumericColumns(tableName);
-        if (numericColumns.length === 0) {
-          console.log("No numeric columns found for statistics.");
-          return;
-        }
-        const statsQuery = this.getStatisticsQuery(tableName, numericColumns);
-        const [stats]: any = await this.db.execute(statsQuery);
-        return stats;
-    }
-
     private async getNumericColumns(tableName: string): Promise<string[]> {
         const columnsQuery = `SHOW COLUMNS FROM \`${tableName}\``;
         const [columns]: any = await this.db.execute(columnsQuery);
@@ -88,12 +99,5 @@ export class SqlCsvRepository implements CsvRepository {
     `;
     }
 
-    async getTableByName(tableName: string): Promise<boolean> {
-        const query = `SHOW TABLES LIKE '${tableName}'`;  
-        const [rows]: any = await this.db.execute(query);
-        if(rows.length > 0){
-            return true
-        }
-        return false
-    }
+ 
 }

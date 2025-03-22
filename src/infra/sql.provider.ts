@@ -3,6 +3,7 @@ import * as mysql from 'mysql2/promise';
 
 import { DI_VARIABLES } from '../di';
 import { ConfigService } from './config.service';
+import { CsvHttpError } from 'src/lib/errors/http-errors';
 
 const provider: FactoryProvider = {
   provide: DI_VARIABLES.DB,
@@ -18,11 +19,10 @@ const provider: FactoryProvider = {
 
       Logger.log('Connected to MySQL database');
       return connection;
-    } catch (error) {
-      Logger.error('Failed to connect to MySQL:', error);
-      throw error;
+    } catch (e) {
+      Logger.error('Failed to connect to MySQL:', e);
+      CsvHttpError.throwHttpErrorFromCsv(e);
     }
   },
 };
-
 export default provider;
